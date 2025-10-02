@@ -1,0 +1,46 @@
+@layer base {
+	/* Force OnchainKit connect button to white with black text. We target the data-testid attributes the library sets. */
+
+	[data-testid="ockConnectButton"],
+	[data-testid="ockConnectAccountButtonInner"],
+	[data-testid="ockConnectWallet_Connected"] {
+		background: #ffffff !important; /* white background */
+		color: #000000 !important; /* black text */
+		border: 1px solid #e6e6e6 !important;
+	}
+
+	/* Hover/focus/active states */
+	[data-testid="ockConnectButton"]:hover,
+	[data-testid="ockConnectAccountButtonInner"]:hover,
+	[data-testid="ockConnectWallet_Connected"]:hover {
+		background: #f7f7f7 !important;
+		color: #000000 !important;
+	}
+
+	[data-testid="ockConnectButton"]:active,
+	[data-testid="ockConnectAccountButtonInner"]:active,
+	[data-testid="ockConnectWallet_Connected"]:active {
+		background: #efefef !important;
+		color: #000000 !important;
+	}
+
+	/* If the library adds inline styles or utility classes, increase specificity using ock prefixed selector */
+	.ock\\:bg-\#0052FF,
+	.ock\\:bg-\#0045D8 {
+		background: #ffffff !important;
+	}
+
+	/* When the button uses the primary pressable class mapping to the primary variable, override the variable on root themes (light/default) */
+	:root.ock-theme-default,
+	:root.ock-theme-base,
+	:root.ock-theme-cyberpunk,
+	:root.ock-theme-hacker,
+	:root {
+		/* override primary color used by OnchainKit components */
+		--ock-primary: #ffffff;
+		--ock-primary-hover: #f7f7f7;
+		--ock-primary-active: #efefef;
+		--ock-primary-washed: #ffffff;
+		--ock-foreground-inverse: #000000; /* text on primary */
+	}
+}
