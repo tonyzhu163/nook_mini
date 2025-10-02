@@ -8,7 +8,7 @@ import {
   WalletDropdownDisconnect,
 } from '@coinbase/onchainkit/wallet';
 import { Identity, Avatar, Name, Address } from '@coinbase/onchainkit/identity';
-import { EARNING_POOLS, USDC_SEPOLIA } from '../constants/pools';
+import { EARNING_POOLS, USDC_SEPOLIA, WBTC_SEPOLIA, LINK_SEPOLIA} from '../constants/pools';
 import { fetchBaseUsdcYields } from '../utils/fetchYields';
 import { Logo } from './Logo';
 import '../styles/wallet.css'; 
@@ -50,13 +50,59 @@ export function RatesPageLive({ onShowDetails }: { onShowDetails: (pool: Pool) =
     chainId: 84532,
   });
 
+  // WBTC balance (only if address filled)
+  const { data: wbtcBalance } = useBalance({
+    address,
+    token: WBTC_SEPOLIA.address || undefined,
+    chainId: 84532,
+  });
+
+  // LINK balance (only if address filled)
+  const { data: linkBalance } = useBalance({
+    address,
+    token: LINK_SEPOLIA.address || undefined,
+    chainId: 84532,
+  });
+
+  // live prices
+  const [ethUsd, setEthUsd] = useState<number | null>(null);
+  const [btcUsd, setBtcUsd] = useState<number | null>(null);
+  const [linkUsd, setLinkUsd] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchPrices() {
+      try {
+        const [ethRes, btcRes, linkRes] = await Promise.all([
+          fetch('https://api.coinbase.com/v2/exchange-rates?currency=ETH'),
+          fetch('https://api.coinbase.com/v2/exchange-rates?currency=BTC'),
+          fetch('https://api.coinbase.com/v2/exchange-rates?currency=LINK')
+        ]);
+        const ethData = await ethRes.json();
+        const btcData = await btcRes.json();
+        const linkData = await linkRes.json();
+        setEthUsd(parseFloat(ethData.data.rates.USD));
+        setBtcUsd(parseFloat(btcData.data.rates.USD));
+        // Some Coinbase instances may not support LINK directly; fallback to NaN guard
+        setLinkUsd(linkData?.data?.rates?.USD ? parseFloat(linkData.data.rates.USD) : null);
+      } catch (e) {
+        console.error('Error fetching fiat rates:', e);
+      }
+    }
+    fetchPrices();
+  }, []);
+
   const highestRate = Math.max(...pools.map(pool => pool.rate));
   
-  const ETH_PRICE = 2400;
-  
-  const totalWalletValue = 
-    (parseFloat(usdcBalance?.formatted || '0')) + 
-    (parseFloat(ethBalance?.formatted || '0') * ETH_PRICE);
+  // compute total wallet USD value from balances and live prices
+  const ethUsdPrice = ethUsd ?? 4400; // fallback to fixed
+  const btcUsdPrice = btcUsd ?? 120000;
+  const linkUsdPrice = linkUsd ?? 23;
+
+  const totalWalletValue =
+    (parseFloat(usdcBalance?.formatted || '0')) +
+    (parseFloat(ethBalance?.formatted || '0') * ethUsdPrice) +
+    (parseFloat(wbtcBalance?.formatted || '0') * btcUsdPrice) +
+    (parseFloat(linkBalance?.formatted || '0') * linkUsdPrice);
 
   const potentialEarnings = (totalWalletValue * highestRate) / 100;
 
@@ -95,12 +141,26 @@ export function RatesPageLive({ onShowDetails }: { onShowDetails: (pool: Pool) =
             }}
           >
             <strong style={{ fontSize: '1.1rem' }}>Your Balances (Base Sepolia)</strong>
-            <div style={{ marginTop: '1rem', fontSize: '0.95rem' }}>
-              ETH: <strong>{parseFloat(ethBalance?.formatted ?? '0').toFixed(5)}</strong> {ethBalance?.symbol ?? 'ETH'}
-            </div>
-            <div style={{ fontSize: '0.95rem' }}>
-              USDC: <strong>{parseFloat(usdcBalance?.formatted ?? '0').toFixed(5)}</strong> {usdcBalance?.symbol ?? 'USDC'}
-            </div>
+            {parseFloat(ethBalance?.formatted ?? '0') > 0 && (
+              <div style={{ marginTop: '1rem', fontSize: '0.95rem' }}>
+                ETH: <strong>{parseFloat(ethBalance?.formatted ?? '0').toFixed(5)}</strong> {ethBalance?.symbol ?? 'ETH'}
+              </div>
+            )}
+            {parseFloat(usdcBalance?.formatted ?? '0') > 0 && (
+              <div style={{ fontSize: '0.95rem' }}>
+                USDC: <strong>{parseFloat(usdcBalance?.formatted ?? '0').toFixed(5)}</strong> {usdcBalance?.symbol ?? 'USDC'}
+              </div>
+            )}
+            {parseFloat(wbtcBalance?.formatted ?? '0') > 0 && (
+              <div style={{ fontSize: '0.95rem' }}>
+                WBTC: <strong>{parseFloat(wbtcBalance?.formatted ?? '0').toFixed(5)}</strong> {wbtcBalance?.symbol ?? 'WBTC'}
+              </div>
+            )}
+            {parseFloat(linkBalance?.formatted ?? '0') > 0 && (
+              <div style={{ fontSize: '0.95rem' }}>
+                LINK: <strong>{parseFloat(linkBalance?.formatted ?? '0').toFixed(5)}</strong> {linkBalance?.symbol ?? 'LINK'}
+              </div>
+            )}
             <div style={{ 
               marginTop: '1rem', 
               paddingTop: '1rem', 

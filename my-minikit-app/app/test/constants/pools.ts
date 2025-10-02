@@ -13,3 +13,19 @@ export const USDC_SEPOLIA = {
   name: 'USD Coin',
   symbol: 'USDC',
 };
+
+export const WBTC_SEPOLIA = {
+  address: ('0x55E1E644a52b407305304dB505777a8dAa4f1122' as unknown) as `0x${string}`,
+  chainId: 84532,
+  decimals: 8,
+  name: 'Wrapped BTC',
+  symbol: 'WBTC',
+};
+
+export const LINK_SEPOLIA = {
+  address: ('0x779877A7B0D9E8603169DdbD7836e478b4624789' as unknown) as `0x${string}`,
+  chainId: 84532,
+  decimals: 18,
+  name: 'Chainlink',
+  symbol: 'LINK',
+};
