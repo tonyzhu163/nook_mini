@@ -4,6 +4,7 @@ import { EARNING_POOLS } from '../constants/pools';
 import { generateMockApyHistory } from '../utils/mockData';
 import { fetchHistoricalApy } from '../utils/fetchYields';
 import { Logo } from './Logo';
+import { PageHeader } from './PageHeader';
 
 type Pool = typeof EARNING_POOLS[0];
 
@@ -58,30 +59,14 @@ export function ProtocolDetailsPage({
       background: 'linear-gradient(to bottom, #f5f5f5 0%, #ffffff 100%)',
       padding: '2rem'
     }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+  <div className="protocol-details" style={{ maxWidth: '900px', margin: '0 auto' }}>
         {/* Back Button */}
-        <button
-          onClick={onBack}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: '#666',
-            fontSize: '1rem',
-            cursor: 'pointer',
-            marginBottom: '2rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-        >
-          ← Back to Rates
-        </button>
+        <PageHeader showBack backLabel="Back to Rates" onBack={onBack} />
 
-        {/* Logo */}
-        <Logo marginBottom="2rem" />
+        {/* PageHeader above replaces older back button and logo */}
 
         {/* Protocol Header */}
-        <div style={{
+        <div className="protocol-header" style={{
           background: '#fff',
           borderRadius: '20px',
           padding: '2.5rem',
@@ -114,9 +99,7 @@ export function ProtocolDetailsPage({
         </div>
 
         {/* Stats Cards */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+        <div className="stats-grid" style={{
           gap: '1rem',
           marginBottom: '2rem'
         }}>

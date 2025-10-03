@@ -1,5 +1,6 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAccount, useBalance } from 'wagmi';
 import {
   Wallet,
@@ -11,14 +12,18 @@ import { Identity, Avatar, Name, Address } from '@coinbase/onchainkit/identity';
 import { EARNING_POOLS, USDC_SEPOLIA, WBTC_SEPOLIA, LINK_SEPOLIA} from '../constants/pools';
 import { fetchBaseUsdcYields } from '../utils/fetchYields';
 import { Logo } from './Logo';
+import { PageHeader } from './PageHeader';
 import '../styles/wallet.css'; 
 
 type Pool = typeof EARNING_POOLS[0];
 
 export function RatesPageLive({ onShowDetails }: { onShowDetails: (pool: Pool) => void }) {
+  const router = useRouter();
   const { address, isConnected } = useAccount();
   const [pools, setPools] = useState<Pool[]>(EARNING_POOLS);
   const [loading, setLoading] = useState(true);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
   
   useEffect(() => {
     async function loadYields() {
@@ -36,6 +41,27 @@ export function RatesPageLive({ onShowDetails }: { onShowDetails: (pool: Pool) =
     }
     loadYields();
   }, []);
+
+  // Swipe handling: swipe left to go back
+  function handleTouchStart(e: React.TouchEvent) {
+    const t = e.touches[0];
+    touchStartX.current = t.clientX;
+    touchStartY.current = t.clientY;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - (touchStartX.current ?? 0);
+    const dy = t.clientY - (touchStartY.current ?? 0);
+    // require mostly horizontal swipe, threshold 75px, and swipe left (dx < -75)
+    if (Math.abs(dy) < 75 && dx < -75) {
+      // navigate back in history on swipe left
+      router.back();
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  }
   
   // ETH balance
   const { data: ethBalance } = useBalance({
@@ -107,14 +133,16 @@ export function RatesPageLive({ onShowDetails }: { onShowDetails: (pool: Pool) =
   const potentialEarnings = (totalWalletValue * highestRate) / 100;
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(to bottom, #f5f5f5 0%, #ffffff 100%)',
-      padding: '2rem'
-    }}>
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(to bottom, #f5f5f5 0%, #ffffff 100%)',
+        padding: '2rem'
+      }}>
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        {/* Logo */}
-        <Logo />
+  <PageHeader showBack backLabel="Back to Home" onBack={() => router.push('/test')} />
 
         {/* Wallet Connect */}
         <div style={{ marginBottom: '2rem' }}>
@@ -140,25 +168,25 @@ export function RatesPageLive({ onShowDetails }: { onShowDetails: (pool: Pool) =
               border: '1px solid #f0f0f0'
             }}
           >
-            <strong style={{ fontSize: '1.1rem' }}>Your Balances (Base Sepolia)</strong>
+            <div style={{ color: '#000', fontSize: '0.95rem', marginBottom: '0.5rem', fontWeight: 600 }}>Your Balances</div>
             {parseFloat(ethBalance?.formatted ?? '0') > 0 && (
               <div style={{ marginTop: '1rem', fontSize: '0.95rem' }}>
-                ETH: <strong>{parseFloat(ethBalance?.formatted ?? '0').toFixed(5)}</strong> {ethBalance?.symbol ?? 'ETH'}
+                <span style={{ color: '#6b7280' }}>ETH:</span> <span style={{ color: '#000' }}>{parseFloat(ethBalance?.formatted ?? '0').toFixed(5)}</span> <span style={{ color: '#6b7280' }}>{ethBalance?.symbol ?? 'ETH'}</span>
               </div>
             )}
             {parseFloat(usdcBalance?.formatted ?? '0') > 0 && (
               <div style={{ fontSize: '0.95rem' }}>
-                USDC: <strong>{parseFloat(usdcBalance?.formatted ?? '0').toFixed(5)}</strong> {usdcBalance?.symbol ?? 'USDC'}
+                <span style={{ color: '#6b7280' }}>USDC:</span> <span style={{ color: '#000' }}>{parseFloat(usdcBalance?.formatted ?? '0').toFixed(5)}</span> <span style={{ color: '#6b7280' }}>{usdcBalance?.symbol ?? 'USDC'}</span>
               </div>
             )}
             {parseFloat(wbtcBalance?.formatted ?? '0') > 0 && (
               <div style={{ fontSize: '0.95rem' }}>
-                WBTC: <strong>{parseFloat(wbtcBalance?.formatted ?? '0').toFixed(5)}</strong> {wbtcBalance?.symbol ?? 'WBTC'}
+                <span style={{ color: '#6b7280' }}>WBTC:</span> <span style={{ color: '#000' }}>{parseFloat(wbtcBalance?.formatted ?? '0').toFixed(5)}</span> <span style={{ color: '#6b7280' }}>{wbtcBalance?.symbol ?? 'WBTC'}</span>
               </div>
             )}
             {parseFloat(linkBalance?.formatted ?? '0') > 0 && (
               <div style={{ fontSize: '0.95rem' }}>
-                LINK: <strong>{parseFloat(linkBalance?.formatted ?? '0').toFixed(5)}</strong> {linkBalance?.symbol ?? 'LINK'}
+                <span style={{ color: '#6b7280' }}>LINK:</span> <span style={{ color: '#000' }}>{parseFloat(linkBalance?.formatted ?? '0').toFixed(5)}</span> <span style={{ color: '#6b7280' }}>{linkBalance?.symbol ?? 'LINK'}</span>
               </div>
             )}
             <div style={{ 
@@ -167,7 +195,7 @@ export function RatesPageLive({ onShowDetails }: { onShowDetails: (pool: Pool) =
               borderTop: '1px solid #f0f0f0',
               fontSize: '1rem'
             }}>
-              Total Value: <strong>${totalWalletValue.toFixed(2)}</strong>
+              Total Value: <strong style={{ fontWeight: 600 }}>${totalWalletValue.toFixed(2)}</strong>
             </div>
           </div>
         )}
@@ -198,7 +226,35 @@ export function RatesPageLive({ onShowDetails }: { onShowDetails: (pool: Pool) =
 
           {/* Rates List */}
           <div style={{ marginBottom: '2rem' }}>
-            {pools.sort((a, b) => b.rate - a.rate).map((pool, index) => (
+            {/**
+             * Sort pools with a fixed priority for certain pool names so they
+             * always show first in the specified order. For pools not in the
+             * priority list, fall back to sorting by rate (desc).
+             * Use a non-mutating sort ([...pools]) to avoid changing state.
+             */}
+            {[...pools].sort((a, b) => {
+              const priorityOrder = [
+                'moonwell',
+                'aave',
+                'seamless morpho',
+                'moonwell morpho',
+                'spark morpho'
+              ];
+
+              const nameA = (a.name || '').toLowerCase().trim();
+              const nameB = (b.name || '').toLowerCase().trim();
+
+              const idxA = priorityOrder.indexOf(nameA);
+              const idxB = priorityOrder.indexOf(nameB);
+
+              const rankA = idxA === -1 ? Number.MAX_SAFE_INTEGER : idxA;
+              const rankB = idxB === -1 ? Number.MAX_SAFE_INTEGER : idxB;
+
+              if (rankA !== rankB) return rankA - rankB;
+
+              // same rank (both not in priority or same priority) -> sort by rate desc
+              return b.rate - a.rate;
+            }).map((pool, index) => (
               <div
                 key={index}
                 style={{
@@ -209,32 +265,87 @@ export function RatesPageLive({ onShowDetails }: { onShowDetails: (pool: Pool) =
                   borderBottom: index < pools.length - 1 ? '1px solid #f0f0f0' : 'none'
                 }}
               >
-                <span style={{ fontWeight: '500', color: '#000' }}>
-                  {pool.name}
-                </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <span style={{
-                    color: index === 0 ? '#7CFF6B' : '#000',
-                    fontWeight: 'bold',
-                    fontSize: '1.1rem'
-                  }}>
-                    {pool.rate.toFixed(1)}% APY
-                  </span>
-                  <button 
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid #e0e0e0',
-                      borderRadius: '8px',
-                      padding: '0.5rem 1rem',
-                      cursor: 'pointer',
-                      fontSize: '0.9rem',
-                      color: '#666'
-                    }}
-                    onClick={() => onShowDetails(pool)}
-                  >
-                    Details
-                  </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, marginRight: '56px' }}>
+                  {/* Avatar / icon */}
+                  <div style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    background: index === 0 ? '#7CFF6B' : '#f3f4f6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flex: '0 0 36px'
+                  }} aria-hidden>
+                    {/* simple initial letter as placeholder */}
+                    <span style={{ color: index === 0 ? '#002200' : '#9ca3af', fontWeight: 700 }}>
+                      {pool.name.split(' ')[0][0] ?? 'P'}
+                    </span>
+                  </div>
+
+                  {/* Text stack: split title and APY into separate elements, increase font sizes by ~15% */}
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    {/* Title (≈15% larger: 0.75rem → 0.86rem) */}
+                    <div title={pool.name} style={{
+                      fontWeight: 600,
+                      fontSize: '0.86rem',
+                      color: '#000',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>{pool.name}</div>
+
+                    {/* APY row (≈15% larger: 0.72rem → 0.83rem) */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.2rem',
+                      marginTop: '0.25rem'
+                    }}>
+                      {index === 0 && (
+                        <>
+                          <span style={{ color: '#7CFF6B', fontWeight: 400, flex: '0 0 auto', fontSize: '0.75rem', lineHeight: 1 }}>Active</span>
+                          <span aria-hidden style={{ color: '#9ca3af', fontSize: '0.6rem', lineHeight: 1, margin: '0 0.25rem' }}>•</span>
+                        </>
+                      )}
+
+                      <div style={{ color: '#6b7280', fontSize: '0.75rem', lineHeight: 1, display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
+                        <span>Current APY is</span>
+                        <span style={{ color: '#6b7280', fontWeight: 400 }}>{new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(Number(pool.rate))}%</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Right chevron button */}
+                <button
+                  onClick={() => {
+                    const name = encodeURIComponent(pool.name);
+                    const protocol = encodeURIComponent(pool.protocol ?? '');
+                    const rate = encodeURIComponent(String(pool.rate));
+                    const pid = encodeURIComponent((pool as any).poolId ?? '');
+                    router.push(`/test/details?name=${name}&protocol=${protocol}&rate=${rate}&poolId=${pid}`);
+                  }}
+                  aria-label="Open details"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    minWidth: 36,
+                    minHeight: 36,
+                    padding: 0,
+                    borderRadius: 18,
+                    background: '#ffffff',
+                    border: '1px solid #f0f0f0',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <span style={{ fontSize: '1rem', color: '#6b7280', lineHeight: 1, display: 'inline-block' }}>›</span>
+                </button>
               </div>
             ))}
           </div>
@@ -257,7 +368,7 @@ export function RatesPageLive({ onShowDetails }: { onShowDetails: (pool: Pool) =
               </div>
               <div style={{
                 fontSize: '3.5rem',
-                fontWeight: 'bold',
+                fontWeight: 600,
                 color: '#000',
                 marginBottom: '1rem'
               }}>
@@ -268,7 +379,7 @@ export function RatesPageLive({ onShowDetails }: { onShowDetails: (pool: Pool) =
                 fontSize: '0.95rem',
                 lineHeight: '1.5'
               }}>
-                Based on your current balance of <strong>${totalWalletValue.toFixed(2)}</strong> you could earn <strong>${potentialEarnings.toFixed(2)}</strong> or higher annually by putting your funds to work with Nook.
+                Based on your current balance of <strong style={{ fontWeight: 600 }}>${totalWalletValue.toFixed(2)}</strong> you could earn ${potentialEarnings.toFixed(2)} or higher annually by putting your funds to work with Nook.
               </div>
             </div>
           )}

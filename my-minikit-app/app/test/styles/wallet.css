@@ -44,3 +44,39 @@
 		--ock-foreground-inverse: #000000; /* text on primary */
 	}
 }
+
+	/* Responsive adjustments for protocol details page */
+	.protocol-details .protocol-header {
+		padding: 2.5rem;
+	}
+
+	.protocol-details .stats-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+		gap: 1rem;
+	}
+
+	@media (max-width: 640px) {
+		.protocol-details .protocol-header {
+			padding: 1.25rem;
+		}
+		.protocol-details h1 {
+			font-size: 1.5rem !important;
+		}
+		.protocol-details .stats-grid {
+			grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+			gap: 0.75rem;
+		}
+		.protocol-details .stats-grid > div {
+			padding: 1rem !important;
+		}
+			/* show the mobile back button */
+			.mobile-back button {
+				display: inline-flex !important;
+				background: transparent;
+				border: none;
+				color: #666;
+				font-size: 1rem;
+				padding: 0.25rem 0.5rem;
+			}
+	}

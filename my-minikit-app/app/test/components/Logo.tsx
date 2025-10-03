@@ -6,7 +6,7 @@ interface LogoProps {
   marginBottom?: string;
 }
 
-export function Logo({ size = 60, marginBottom = '3rem' }: LogoProps) {
+export function Logo({ size = 60, marginBottom = 'clamp(1rem, 4vw, 3rem)' }: LogoProps) {
   return (
     <Image 
       src={nookLogo} 
