@@ -15,6 +15,8 @@ export function ProtocolDetailsPage({
   pool: Pool; 
   onBack: () => void;
 }) {
+  // Use the display name provided on the pool (set in fetchBaseUsdcYields)
+  // so text sections match the card names (e.g. 'Seamless Morpho').
   const [apyHistory, setApyHistory] = useState(generateMockApyHistory(pool.rate));
   const [loading, setLoading] = useState(true);
   
@@ -316,14 +318,14 @@ export function ProtocolDetailsPage({
             marginBottom: '1rem',
             color: '#000'
           }}>
-            About {pool.protocol}
+            About {pool.name}
           </h3>
           <p style={{
             color: '#666',
             lineHeight: '1.6',
             marginBottom: '1rem'
           }}>
-            {pool.protocol} is a decentralized lending protocol that allows users to earn interest on their crypto assets. 
+            {pool.name} is a decentralized lending protocol that allows users to earn interest on their crypto assets. 
             The APY varies based on supply and demand dynamics within the protocol.
           </p>
           <p style={{
